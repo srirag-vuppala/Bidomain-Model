@@ -1,6 +1,7 @@
 """
 intracellular initially set to 0
 extra initially set to -70
+
         
 Important notes:
     1. We want to find the speed of the action potential so having a reference to time is necessary.
@@ -35,8 +36,8 @@ def create_sheets():
     Here the sheet will comprise of arrays of rows.(in practice)
     """
     # Make the intracellular first with all 0s
-    n_rows = 3
-    n_columns = 3
+    n_rows = 4
+    n_columns = 4
     intra = np.zeros([n_rows, n_columns])
 
     # Make the extracellular first with all -70s
@@ -73,6 +74,17 @@ def create_laplace_matrix(V, c):
         
     return L
 
+def check_laplace_matrix(L):
+    # I might be checking this wrong
+    tsum = 0
+    for arr in L:
+        for i in arr:
+            tsum += i
+    if tsum == 0:
+        print("yay it works")    
+    else:
+        print("Try again")
+
 
 def main():
     # Create the sheets first
@@ -92,15 +104,15 @@ def main():
     delta_x = 0.01
     const_intra = 1/(delta_x*delta_x)  
     const_extra = 0/(delta_x*delta_x)
+    const_intra = 1
+
+    
 
     # create our laplacian matrix
     print("The laplacian matrix")
-    Li = create_laplace_matrix(intra_flat, const_intra)
-    Le = create_laplace_matrix(extra_flat, const_extra)
-    matprint(Li)
-    # extra_flat = flat_single(extra)
-    # print(extra_flat)
-    # Le = create_laplace_matrix(extra_flat)
+    L = create_laplace_matrix(intra_flat, const_intra)
+    matprint(L)
+    check_laplace_matrix(L)
 
     # V = flat(intra, extra)
     # print(V)
