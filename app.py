@@ -38,8 +38,8 @@ def create_sheets():
     the sheet will comprise of arrays of columns.
     """
     # Make the intracellular first with all 0s
-    n_rows = 4
-    n_columns = 4
+    n_rows = 5
+    n_columns = 5
     intra = np.zeros([n_columns, n_rows ])
 
     # Make the extracellular first with all -70s
@@ -47,14 +47,20 @@ def create_sheets():
     extra += -70
 
     # for testing purposes
-    intra[1] += -20
+    # intra[1] += -20
     return intra, extra
 
 
 def create_laplace_matrix(V, c):
-    # takes in either intra or extra and makes the respective L
+    # takes in either intra or extra flattens it then and makes the respective L
+    flattened = flat(V)
+    print("Flattened : ")
+    print(flattened)
+
     L = []
-    size = len(V)
+    size = len(flattened)
+    # this is the number that changes according to the size of matrix
+    buffer_number = len(V[0])
     L = np.diagflat([c*4 for i in range(size)])
 
     temp = []
@@ -63,7 +69,7 @@ def create_laplace_matrix(V, c):
         # Here the number is 3 for 3x3 i think 4 for 4x4 
         # I think the trend continues but I haven't verified it.
         # The logic here is every third element should be multiplied with 0 and not -1
-        if (i+1)%3 == 0:
+        if (i+1)%buffer_number == 0:
             temp.append(0)
         else:
             temp.append(c*-1)
@@ -75,9 +81,9 @@ def create_laplace_matrix(V, c):
 
     # Here the number is 3 for 3x3 i think 4 for 4x4 
     # I think the trend continues but I haven't verified it.
-    temp = [c*-1 for i in range(size-3)]
-    L += np.diagflat(temp, 3)
-    L += np.diagflat(temp, -3)
+    temp = [c*-1 for i in range(size-buffer_number)]
+    L += np.diagflat(temp, buffer_number)
+    L += np.diagflat(temp, -1*buffer_number)
         
     return L
 
@@ -100,11 +106,6 @@ def main():
     # matprint(intra, True)
     # matprint(extra)
 
-    # Flatten the Transpose array(because transpose of the array is our theoretical representation) then flatten
-    intra_flat = flat(intra)
-    extra_flat = flat(extra)
-    print("Flattened : ")
-    print(intra_flat)
 
     # Make the constant that multiplies all through the laplacian matrix | sigma/(delta x)^2
     # TODO: Find this constant (Ask prof for values)
@@ -112,17 +113,12 @@ def main():
     const_intra = 1/(delta_x*delta_x)  
     const_extra = 0/(delta_x*delta_x)
     const_intra = 1
-
     
-
     # create our laplacian matrix
+    L = create_laplace_matrix(intra, const_intra)
     print("The laplacian matrix")
-    L = create_laplace_matrix(intra_flat, const_intra)
     matprint(L)
     check_laplace_matrix(L)
-
-    # V = flat(intra, extra)
-    # print(V)
 
 
 if __name__ == '__main__':
