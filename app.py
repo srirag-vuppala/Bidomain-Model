@@ -2,6 +2,9 @@
 intracellular initially set to 0
 extra initially set to -70
 
+Questions for Dr. Lin:
+    1. Would it be possible for us to generate the laplacian matrix for the intra then extra and -> form the complete laplacian matrix?
+    2. This is a bit conceptual but would the pattern of the laplacian descrete 
         
 Important notes:
     1. We want to find the speed of the action potential so having a reference to time is necessary.
@@ -32,16 +35,15 @@ np.set_printoptions(precision=3)
 
 def create_sheets():
     """
-    the sheet will comprise of arrays of columns.(in theory)
-    Here the sheet will comprise of arrays of rows.(in practice)
+    the sheet will comprise of arrays of columns.
     """
     # Make the intracellular first with all 0s
     n_rows = 4
     n_columns = 4
-    intra = np.zeros([n_rows, n_columns])
+    intra = np.zeros([n_columns, n_rows ])
 
     # Make the extracellular first with all -70s
-    extra = np.zeros([n_rows, n_columns])
+    extra = np.zeros([n_columns, n_rows ])
     extra += -70
 
     # for testing purposes
@@ -56,7 +58,10 @@ def create_laplace_matrix(V, c):
     L = np.diagflat([c*4 for i in range(size)])
 
     temp = []
+
     for i in range(size - 1):
+        # Here the number is 3 for 3x3 i think 4 for 4x4 
+        # I think the trend continues but I haven't verified it.
         # The logic here is every third element should be multiplied with 0 and not -1
         if (i+1)%3 == 0:
             temp.append(0)
@@ -68,6 +73,8 @@ def create_laplace_matrix(V, c):
     L += np.diagflat(temp, 1)
     L += np.diagflat(temp, -1)
 
+    # Here the number is 3 for 3x3 i think 4 for 4x4 
+    # I think the trend continues but I haven't verified it.
     temp = [c*-1 for i in range(size-3)]
     L += np.diagflat(temp, 3)
     L += np.diagflat(temp, -3)
@@ -89,13 +96,13 @@ def check_laplace_matrix(L):
 def main():
     # Create the sheets first
     intra, extra = create_sheets()
-    # matprint(intra)
-    matprint(intra, True)
+    matprint(intra)
+    # matprint(intra, True)
     # matprint(extra)
 
     # Flatten the Transpose array(because transpose of the array is our theoretical representation) then flatten
-    intra_flat = flat(intra.T)
-    extra_flat = flat(extra.T)
+    intra_flat = flat(intra)
+    extra_flat = flat(extra)
     print("Flattened : ")
     print(intra_flat)
 

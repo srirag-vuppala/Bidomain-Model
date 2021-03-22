@@ -1,4 +1,3 @@
-***
 Bidomain-Model
 ---
 A bidomain model of the heart where we simulate the progression of an action potential within cells of the heart.

@@ -3,7 +3,7 @@ import numpy as np
 # TODO figure out to way to set precision with matprint
 np.set_printoptions(precision=3)
 
-def matprint(mat, likeTheory=False, fmt="g"):
+def matprint(mat, fmt="g"):
     """
     USE: This function prints out the matrix in a nice and clean way.
          It also represents the matrix as we view it conceptually not just how its stored in numpy.
@@ -11,17 +11,10 @@ def matprint(mat, likeTheory=False, fmt="g"):
     If an argument likeTheory is given it'll print out the array like how we conceptualize it in our theory. 
     i.e our sheet is a array of arrays of columns
     """
-    if likeTheory == True:
-        mat = mat.T
-        msg1 = "Theory representation"
-        print('-'*len(msg1))
-        print(msg1)
-        print('-'*len(msg1))
-    else:
-        msg2 = "Actual data representation"
-        print('-'*len(msg2))
-        print(msg2)
-        print('-'*len(msg2))
+    msg2 = "Actual data representation"
+    print('-'*len(msg2))
+    print(msg2)
+    print('-'*len(msg2))
 
     col_maxes = [max([len(("{:"+fmt+"}").format(x)) for x in col]) for col in mat.T]
     for x in mat:
@@ -30,10 +23,7 @@ def matprint(mat, likeTheory=False, fmt="g"):
         print("")
         print("")
     
-    if likeTheory== True:
-        print('-'*len(msg1))
-    else:
-        print('-'*len(msg2))
+    print('-'*len(msg2))
 
         
 def flat(V):
@@ -57,7 +47,7 @@ def flat(V):
 
 
 def main():
-    arr = np.zeros([3,3])
+    arr = np.zeros([3,4])
     print(arr)
     matprint(arr)
 
