@@ -1,4 +1,6 @@
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # TODO figure out to way to set precision with matprint
 np.set_printoptions(precision=3)
@@ -33,6 +35,13 @@ def flat(V):
             flat.append(ele)
     return flat
 
+# def get_internal_matrix(V):
+#     temp = V
+#     temp = temp[1:len(temp)-1]
+#     for i, ele in enumerate(temp):
+#         temp[i] = temp[i][1:len(temp[i])-1]
+#     return temp
+
 # def flat_both(intra, extra):
 #     # Make it flat with v = [vi ..... ve] this is the V vector that gets multiplied with L[rows*2, cols*2]
 #     flat = []
@@ -44,12 +53,18 @@ def flat(V):
 #             flat.append(ele)
 #     return flat
 
+def display_heat_map(V):
+    sns.set_theme()
+    sns.color_palette("rocket", as_cmap=True)
+    ax = sns.heatmap(V,  linewidths=1, square=True, annot=True)
+    # ax = sns.heatmap(V,  linewidths=1, square=True, cmap='Blues', annot=True)
+    plt.show()
 
 
 def main():
-    arr = np.zeros([3,4])
-    print(arr)
+    arr = np.zeros([4,4])
     matprint(arr)
+
 
 if __name__ == '__main__':
     main()

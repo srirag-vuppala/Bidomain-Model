@@ -11,7 +11,7 @@ TBA
 ### Installing
 * Clone the repository  
     ```
-    git clone ...
+    git clone https://github.com/srirag-vuppala/Bidomain-Model.git
     ```
 
 ### Executing program
