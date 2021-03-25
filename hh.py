@@ -67,24 +67,23 @@ class HodgkinHuxley():
         return final
 
     def main(self, V):
-        # TODO : Is this the right approach?
+        # Here V is Vtrans
         I = []
-        for v in V:
-            n=self.n_inf(v)
-            m=self.m_inf(v)
-            h=self.h_inf(v)
+        n=self.n_inf(V)
+        m=self.m_inf(V)
+        h=self.h_inf(V)
 
-            GK = []
-            GNa = []
-            GL = []
-            for i in range(len(v)):
-                GK.append((self.g_K / self.C_m) * np.power(n[i], 4.0))
-                #GNa.append((self.g_Na / self.C_m) * np.power(m[i], 3.0) * h[i])
-                GNa.append((self.g_Na / self.C_m) * np.power(m[i], 3.0) * 0.596)
-                GL.append(self.g_L / self.C_m) 
-            for i in range(len(v)):
-                I.append((GK[i] * (V[i] - self.V_K)) + (GNa[i] * (V[i] - self.V_Na)) + (GL[i] * (V[i] - self.V_L)) - 0) 
+        GK = []
+        GNa = []
+        GL = []
+        for i in range(len(V)):
+            GK.append((self.g_K / self.C_m) * np.power(n[i], 4.0))
+            #GNa.append((self.g_Na / self.C_m) * np.power(m[i], 3.0) * h[i])
+            GNa.append((self.g_Na / self.C_m) * np.power(m[i], 3.0) * 0.596)
+            GL.append(self.g_L / self.C_m) 
+        for i in range(len(V)):
+            I.append((GK[i] * (V[i] - self.V_K)) + (GNa[i] * (V[i] - self.V_Na)) + (GL[i] * (V[i] - self.V_L)) - 0) 
         return I
 
 if __name__ == '__main__':
-    HodgkinHuxley().main()
+    HodgkinHuxley().main([1, 2, 3, 4])

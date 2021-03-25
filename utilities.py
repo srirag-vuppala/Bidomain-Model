@@ -1,6 +1,8 @@
 import numpy as np
 import seaborn as sns
+import pandas as pd
 import matplotlib.pyplot as plt
+
 
 # TODO figure out to way to set precision with matprint
 np.set_printoptions(precision=3)
@@ -13,6 +15,7 @@ def matprint(mat, fmt="g"):
     If an argument likeTheory is given it'll print out the array like how we conceptualize it in our theory. 
     i.e our sheet is a array of arrays of columns
     """
+    mat = np.asarray(mat)
     msg2 = "Actual data representation"
     print('-'*len(msg2))
     print(msg2)
@@ -33,7 +36,24 @@ def flat(V):
     for row in V:
         for ele in row:
             flat.append(ele)
-    return flat
+    return np.asarray(flat)
+
+def unflatten(V, rows, cols):
+    size = len(V)
+    final = []
+    i, r, = 0, 0
+    while i < size and r < rows:
+        temp = []
+        c=0
+        while c < cols:
+            temp.append(V[i])
+            c+=1
+            i += 1
+        final.append(temp)
+        r += 1
+    print(final)
+    return np.asarray(final)
+    
 
 # def get_internal_matrix(V):
 #     temp = V
@@ -54,16 +74,22 @@ def flat(V):
 #     return flat
 
 def display_heat_map(V):
+    df = pd.DataFrame(V, columns=[str(i)+'cols' for i in range(len(V))], index=[str(i)+'rows' for i in range(len(V[0]))]) 
     sns.set_theme()
     sns.color_palette("rocket", as_cmap=True)
-    ax = sns.heatmap(V,  linewidths=1, square=True, annot=True)
+    ax = sns.heatmap(df,  linewidths=1, square=True, annot=True)
+    ax.invert_yaxis()
     # ax = sns.heatmap(V,  linewidths=1, square=True, cmap='Blues', annot=True)
     plt.show()
+
+def split_list(a_list):
+    half = len(a_list)//2
+    return a_list[:half], a_list[half:]
 
 
 def main():
     arr = np.zeros([4,4])
-    matprint(arr)
+    matprint(unflatten(flat(arr), 4, 4))
 
 
 if __name__ == '__main__':
