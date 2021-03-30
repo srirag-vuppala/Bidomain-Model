@@ -30,32 +30,22 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation 
 import pandas as pd
 # from ipywidgets import interactive
-from utilities import matprint, flat, display_heat_map, split_list, unflatten
+from utilities import matprint, flat, display_heat_map, split_list, unflatten, check_laplace_matrix
 import hh
-# from scipy.sparse.csgraph import laplacian
 
 # Prints the arrays properly with elements as X.YYY
 np.set_printoptions(precision=3)
 
 
 def create_sheets():
-    """
-    the sheet will comprise of arrays of columns.
-    """
-    # Make the intracellular first with all 0s
+    # the sheet will comprise of arrays of columns.
     n_rows = 4 
     n_columns = 4 
     intra = np.zeros([n_columns, n_rows ])
     intra += -70
-
-    # Make the extracellular first with all -70s
     extra = np.zeros([n_columns, n_rows ])
-
-    # for testing purposes
     return intra, extra
      
-
-
 def create_laplace_matrix(V, c):
     # takes in either intra or extra flattens it then and makes the respective L
     flattened= flat(V)
@@ -113,18 +103,6 @@ def merge_laplace_matrix(Li, Le):
     return np.asarray(final)
         
 
-def check_laplace_matrix(L):
-    # Each row's elements sum should be = 0
-    # Each column's elements sum should be = 0
-    # Thus total sum of all elements should be 0 too 
-    tsum = 0
-    for arr in L:
-        for i in arr:
-            tsum += i
-    if tsum == 0:
-        print("yay it works")    
-    else:
-        print("Try again")
 
 
 def generate_ionic_current(V):
@@ -142,36 +120,57 @@ def generate_ionic_current(V):
         temp.append(-1*i)
     return temp 
 
+# def simulate(intra, extra, L):
+#     # we might need to convert trans_V is not a sheet 
+#     orig_intra, orig_extra = intra, extra
+#     stepper = 0
+#     while stepper < 10:
+#         #TODO check if + or - for the shift
+#         trans_V = np.add(flat(intra)-flat(extra), 70.0)
+#         # trans_V = (flat(intra)- flat(extra)) + 70
+#         val = 30.0
+#         if stepper < 5:
+#             trans_V[0] = -70+val
+#             trans_V[1] = -70+val
+#             # trans_V[2] = -70+val
+#             trans_V[-1] = -70+val
+#             trans_V[-2] = -70+val
+#             # trans_V[-3] = -70+val
+#         # print(generate_ionic_current(trans_V))
+#         new_V = np.linalg.solve(L, generate_ionic_current(trans_V))
+#         intra, extra = split_list(new_V)
+#         intra = unflatten(intra, len(orig_intra), len(orig_intra[0]))
+#         extra = unflatten(extra, len(orig_extra), len(orig_extra[0]))
+#         #display stuff
+#         display_heat_map(intra - extra)
+        
+#         # trans_V = np.add(intra - extra, 70.0) 
+#         stepper += 1
+
 def simulate(intra, extra, L):
+    # we might need to convert trans_V to a sheet 
     orig_intra, orig_extra = intra, extra
     stepper = 0
-    while stepper < 10:
+    while stepper < 1:
         #TODO check if + or - for the shift
         trans_V = np.add(flat(intra)-flat(extra), 70.0)
-        # trans_V = (flat(intra)- flat(extra)) + 70
+        trans_V = unflatten(trans_V, len(orig_intra), len(orig_intra[0]))
+        matprint(trans_V)
         val = 30.0
         if stepper < 5:
             trans_V[0] = -70+val
-            trans_V[1] = -70+val
-            # trans_V[2] = -70+val
             trans_V[-1] = -70+val
-            trans_V[-2] = -70+val
-            # trans_V[-3] = -70+val
-        print(generate_ionic_current(trans_V))
-        new_V = np.linalg.solve(L, generate_ionic_current(trans_V))
+        # print(generate_ionic_current(trans_V))
+        new_V = np.linalg.solve(L, generate_ionic_current(flat(trans_V)))
         intra, extra = split_list(new_V)
         intra = unflatten(intra, len(orig_intra), len(orig_intra[0]))
         extra = unflatten(extra, len(orig_extra), len(orig_extra[0]))
+
         #display stuff
-        display_heat_map(intra - extra)
+        # display_heat_map(intra - extra)
         
         # trans_V = np.add(intra - extra, 70.0) 
         stepper += 1
-
-
-
-    # Generate Ionic current i.e the chi(membrane surface-to-volume ratio) * (Cm delV/delt + Iion)
-
 
 def main():
     # Create the sheets first
@@ -179,6 +178,7 @@ def main():
     # matprint(intra)
 
     # Make the constant that multiplies all through the laplacian matrix | sigma/(delta x)^2
+    # Divide this constant with chi (membrane surface-to-volume ratio)   
     # TODO: Find this constant (Ask prof for values)
     delta_x = 0.01
     const_intra = 1/(delta_x*delta_x)  
@@ -196,15 +196,16 @@ def main():
     # Merge the Laplacian matrices and flat(Vi)+flat(Ve) = V (Variables) ; so we have a single L and V
     L = merge_laplace_matrix(Li, Le)
     matprint(L)
+    check_laplace_matrix(L)
     # The shape of our total V variables
     V = np.concatenate((flat(intra), flat(extra)), axis=0)
 
-    simulate(intra, extra, L)
+    # simulate(intra, extra, L)
+    print(V)
+    matprint(unflatten(flat(intra)-flat(extra) , 3, 3))
 
     # Display heat map of intra-cellular and extra-cellular matrices
     # display_heat_map(L)
-
-
 
 if __name__ == '__main__':
     main()

@@ -51,8 +51,22 @@ def unflatten(V, rows, cols):
             i += 1
         final.append(temp)
         r += 1
-    print(final)
+    # print(final)
     return np.asarray(final)
+
+def check_laplace_matrix(L):
+    # Each row's elements sum should be = 0
+    # Each column's elements sum should be = 0
+    # Thus total sum of all elements should be 0 too 
+    tsum = 0
+    for arr in L:
+        for i in arr:
+            tsum += i
+    if tsum == 0:
+        print("yay it works")    
+    else:
+        print("Try again")
+
     
 
 # def get_internal_matrix(V):
