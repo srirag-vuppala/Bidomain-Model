@@ -181,8 +181,9 @@ def main():
     # Divide this constant with chi (membrane surface-to-volume ratio)   
     # TODO: Find this constant (Ask prof for values)
     delta_x = 0.01
-    const_intra = 1/(delta_x*delta_x)  
-    const_extra = -1/(delta_x*delta_x)
+    chi = 1
+    const_intra = 1/(delta_x*delta_x*chi)  
+    const_extra = -1/(delta_x*delta_x*chi)
     # const_intra = 1
     # const_extra = -1
     
