@@ -67,7 +67,6 @@ class HodgkinHuxley():
         return final
 
     def main(self, V):
-        # Here V is Vtrans
         I = []
         n=self.n_inf(V)
         m=self.m_inf(V)

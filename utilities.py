@@ -38,7 +38,7 @@ def flat(V):
             flat.append(ele)
     return np.asarray(flat)
 
-def unflatten(V, rows, cols):
+def unflat(V, rows, cols):
     size = len(V)
     final = []
     i, r, = 0, 0
@@ -100,10 +100,31 @@ def split_list(a_list):
     half = len(a_list)//2
     return a_list[:half], a_list[half:]
 
+def flat_join(A, B):
+    # Will probably used to flatten the intra and extra then attach to make a single arr of all the V's
+    return np.concatenate((flat(A), flat(B)), axis=0)
+
+def unflat_join(V, rows, cols):
+    # Will probably used to unflatten the intra and extra then attach to make a single arr of all the V's
+    A,B = split_list(V)
+    A = unflat(A, rows, cols)
+    B = unflat(B, rows, cols)
+    return A, B
+
+def create_block_diag_matrix(Li, Le):
+    # block diagonal form 
+    # Create the big laplace matrix with Vi's L and Ve's L
+    final = []
+    zero = np.zeros(len(Li))
+    for ele in Li:
+        final.append(np.concatenate((ele, zero), axis=0))
+    for ele in Le:
+        final.append(np.concatenate((zero, ele), axis=0))
+    return np.asarray(final)
 
 def main():
     arr = np.zeros([4,4])
-    matprint(unflatten(flat(arr), 4, 4))
+    matprint(unflat(flat(arr), 4, 4))
 
 
 if __name__ == '__main__':

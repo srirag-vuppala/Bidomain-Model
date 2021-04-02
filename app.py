@@ -1,36 +1,12 @@
 """
-intracellular initially set to -70
-extra initially set to 0 
-
-Questions for Dr. Lin:
-    1. Would it be possible for us to generate the laplacian matrix for the intra then extra and -> form the complete laplacian matrix?
-    2. This is a bit conceptual but would the pattern of the laplacian descrete 
-        
-Important notes:
-    1. We want to find the speed of the action potential so having a reference to time is necessary.
-    2. An action potential is initiated when V(intra) - V(extra) > 0 i.e delta V > 0
-    3. We are only involving ourselves with 2-D in this model that's why sheet.
-
-Strategy:
-    1. Create two sheets each representing the intracellular and extra cellular layer for potentials.
-        a. The sheets are going to arrays of columns, here each cell represents a single point in space not the ACTUAL cell.
-        
-    2. Initiate the action potential by setting the ends of the 
-        a. extra cellular -30 and -110
-        Do this for a while and use the same hodgkin and huxley from cable eqn
-        
-Checkpoints:
-    1. The sum of all columns and rows = 0.
-    2. Check if you hit the correct points manually. 
-
+**IF THERE IS A FUNCTION YOU CAN'T FIND THE FUNCTION ITS PROBABLY PLACED IN THE UTILITIES**
 """
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation 
 import pandas as pd
-# from ipywidgets import interactive
-from utilities import matprint, flat, display_heat_map, split_list, unflatten, check_laplace_matrix
+from utilities import *
 import hh
 
 # Prints the arrays properly with elements as X.YYY
@@ -74,7 +50,6 @@ def create_laplace_matrix(V, c):
     for i in range(size - 1):
         # Here the number is 3 for 3x3 i think 4 for 4x4 
         # I think the trend continues but I haven't verified it.
-        # The logic here is every third element should be multiplied with 0 and not 1
         if (i+1)%buffer_number == 0:
             temp.append(0)
         else:
@@ -85,91 +60,73 @@ def create_laplace_matrix(V, c):
     L += np.diagflat(temp, -1)
 
     #The diagonals that are spaced our depending on the size of the matrix
-    # Here the number is 3 for 3x3 i think 4 for 4x4 
-    # I think the trend continues but I haven't verified it.
     temp = [c*1 for i in range(size-buffer_number)]
     L += np.diagflat(temp, buffer_number)
     L += np.diagflat(temp, -1*buffer_number)
     return L
 
-def merge_laplace_matrix(Li, Le):
-    # Create the big laplace matrix with Vi's L and Ve's L
-    final = []
-    zero = np.zeros(len(Li))
-    for ele in Li:
-        final.append(np.concatenate((ele, zero), axis=0))
-    for ele in Le:
-        final.append(np.concatenate((zero, ele), axis=0))
-    return np.asarray(final)
-        
+def generate_ionic_current(V, A):
+    V_send = np.matmul(create_block_diag_matrix(A,A), V)
+    V_send = np.add(V_send, 70)
+    I_ion = hh.HodgkinHuxley().main(flat(V_send))
 
+    return np.asarray(I_ion) 
 
+def find_A(trans_V, V_full):
+    # We can't use linalg.solve because A is not gonna be square
+    # We use atleast_2d because it doesn't like one dimensional arrays for some reason
+    #tbh i still don't completely know if this is right so TODO verify this.
+    #Update : I don't know how to verify this esp considering how A is not going to be a square matrix.
+    final = np.linalg.lstsq(np.atleast_2d(V_full), np.atleast_2d(trans_V), rcond=None)
+    #This is probably returning an incorrect value since We can't use an Ax = b solver to find non square A
+    return final 
 
-def generate_ionic_current(V):
-    #TODO figure this out
-    # Membrane surface to volume ratio
-    #look in cable
-    chi = 1
-    I_ion = hh.HodgkinHuxley().main(V)
-    # this doesn't work for some reason
-    # final = chi*(np.concatenate((I_ion, -1*I_ion), axis=0))
-    temp = []
-    for i in I_ion:
-        temp.append(i)
-    for i in I_ion:
-        temp.append(-1*i)
-    return temp 
+def find_coeff_V(type, A, C_m, delta_t, L):
+    term1 = C_m/delta_t
+    term1 = np.matmul(term1, create_block_diag_matrix(A,A)) 
+    
+    term2 = 0.5*L
 
-# def simulate(intra, extra, L):
-#     # we might need to convert trans_V is not a sheet 
-#     orig_intra, orig_extra = intra, extra
-#     stepper = 0
-#     while stepper < 10:
-#         #TODO check if + or - for the shift
-#         trans_V = np.add(flat(intra)-flat(extra), 70.0)
-#         # trans_V = (flat(intra)- flat(extra)) + 70
-#         val = 30.0
-#         if stepper < 5:
-#             trans_V[0] = -70+val
-#             trans_V[1] = -70+val
-#             # trans_V[2] = -70+val
-#             trans_V[-1] = -70+val
-#             trans_V[-2] = -70+val
-#             # trans_V[-3] = -70+val
-#         # print(generate_ionic_current(trans_V))
-#         new_V = np.linalg.solve(L, generate_ionic_current(trans_V))
-#         intra, extra = split_list(new_V)
-#         intra = unflatten(intra, len(orig_intra), len(orig_intra[0]))
-#         extra = unflatten(extra, len(orig_extra), len(orig_extra[0]))
-#         #display stuff
-#         display_heat_map(intra - extra)
-        
-#         # trans_V = np.add(intra - extra, 70.0) 
-#         stepper += 1
+    if type == 'new':
+        return term1 - term2
+    elif type == 'now':
+        return term1 + term2
 
 def simulate(intra, extra, L):
-    # we might need to convert trans_V to a sheet 
     orig_intra, orig_extra = intra, extra
+    V_now = flat_join(intra, extra)
     stepper = 0
     while stepper < 1:
-        #TODO check if + or - for the shift
-        trans_V = np.add(flat(intra)-flat(extra), 70.0)
-        trans_V = unflatten(trans_V, len(orig_intra), len(orig_intra[0]))
-        matprint(trans_V)
-        val = 30.0
-        if stepper < 5:
-            trans_V[0] = -70+val
-            trans_V[-1] = -70+val
-        # print(generate_ionic_current(trans_V))
-        new_V = np.linalg.solve(L, generate_ionic_current(flat(trans_V)))
-        intra, extra = split_list(new_V)
-        intra = unflatten(intra, len(orig_intra), len(orig_intra[0]))
-        extra = unflatten(extra, len(orig_extra), len(orig_extra[0]))
-
-        #display stuff
+        #1
+        #display stuff existing right now 
         # display_heat_map(intra - extra)
+
+        #2
+        if stepper < 5:
+            extra[0] = -40
+            extra[-1] = 40
+        #2
+        trans_V = flat(intra)-flat(extra)
+        A_matrix = find_A(V_now, trans_V)
+
+        C_m = 1
+        delta_t = 1
+        V_new_coeff = find_coeff_V("new", A_matrix, C_m, delta_t, L)
+        V_now_coeff = find_coeff_V("now", A_matrix, C_m, delta_t, L)
+
+        # I can't think of a better name aahhhhhh
+        left_term = np.matmul(V_now_coeff, V_now)
+        right_term = generate_ionic_current(V_now, A_matrix)
+        soln_term = left_term - right_term
+
+        #3 
+        V_new = np.linalg.solve(V_new_coeff, soln_term)
+
+        #overwrite the intra and extra to new intra and extra 
+        intra, extra = unflat_join(V_new, len(orig_intra), len(orig_extra[0]))
+
         
-        # trans_V = np.add(intra - extra, 70.0) 
+        V_now = V_new
         stepper += 1
 
 def main():
@@ -182,10 +139,10 @@ def main():
     # TODO: Find this constant (Ask prof for values)
     delta_x = 0.01
     chi = 1
-    const_intra = 1/(delta_x*delta_x*chi)  
-    const_extra = -1/(delta_x*delta_x*chi)
-    # const_intra = 1
-    # const_extra = -1
+    sigma_i = 1
+    sigma_e = 1
+    const_intra = sigma_i/(delta_x*delta_x*chi)  
+    const_extra = -1*sigma_e/(delta_x*delta_x*chi)
     
     # create our laplacian matrix
     Li = create_laplace_matrix(intra, const_intra)
@@ -194,20 +151,13 @@ def main():
     # matprint(Li)
     check_laplace_matrix(Li)
 
-    # Merge the Laplacian matrices and flat(Vi)+flat(Ve) = V (Variables) ; so we have a single L and V
-    L = merge_laplace_matrix(Li, Le)
+    # Merge the Laplacian matrices 
+    L = create_block_diag_matrix(Li, Le)
     matprint(L)
     check_laplace_matrix(L)
-    # The shape of our total V variables
-    V = np.concatenate((flat(intra), flat(extra)), axis=0)
 
-    # simulate(intra, extra, L)
-    print(V)
-    matprint(unflatten(flat(intra)-flat(extra) , 3, 3))
+    simulate(intra, extra, L)
 
-    # Display heat map of intra-cellular and extra-cellular matrices
-    # display_heat_map(L)
 
 if __name__ == '__main__':
     main()
-    # generate_ionic_current([4]*5)
