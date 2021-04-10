@@ -15,8 +15,8 @@ np.set_printoptions(precision=3)
 
 def create_sheets():
     # the sheet will comprise of arrays of columns.
-    n_rows = 4 
-    n_columns = 4 
+    n_rows = 3 
+    n_columns =3 
     intra = np.zeros([n_columns, n_rows ])
     intra += -70
     extra = np.zeros([n_columns, n_rows ])
@@ -66,24 +66,39 @@ def create_laplace_matrix(V, c):
     return L
 
 def generate_ionic_current(V, A):
-    V_send = np.matmul(create_block_diag_matrix(A,A), V)
+    V_send = np.matmul(A, V)
+    print(V_send)
     V_send = np.add(V_send, 70)
+    # print(V_send)
     I_ion = hh.HodgkinHuxley().main(flat(V_send))
 
     return np.asarray(I_ion) 
 
-def find_A(trans_V, V_full):
-    # We can't use linalg.solve because A is not gonna be square
-    # We use atleast_2d because it doesn't like one dimensional arrays for some reason
-    #tbh i still don't completely know if this is right so TODO verify this.
-    #Update : I don't know how to verify this esp considering how A is not going to be a square matrix.
-    final = np.linalg.lstsq(np.atleast_2d(V_full), np.atleast_2d(trans_V), rcond=None)
-    #This is probably returning an incorrect value since We can't use an Ax = b solver to find non square A
+def find_A(trans_V):
+    # The pattern is the length of the trans_V is going to be the identity matrix which is going to be like [I -I | I -I]
+    size_I_matrix = len(trans_V)
+
+    I_pos = np.identity(size_I_matrix)
+    I_neg = -1*I_pos
+
+    final = np.zeros((size_I_matrix*2, size_I_matrix*2))
+    #merging horizontally
+    temp = np.concatenate((I_pos, I_neg), axis=1)
+
+    #merging vertically
+    final = np.concatenate((temp, temp), axis=0);
+
+    # To remove the negative zero i.e a weird kink with numpy
+    final = np.where(final==-0, 0, final)
+    
+    matprint(final)
+    
+
     return final 
 
 def find_coeff_V(type, A, C_m, delta_t, L):
     term1 = C_m/delta_t
-    term1 = np.matmul(term1, create_block_diag_matrix(A,A)) 
+    term1 = term1*A 
     
     term2 = 0.5*L
 
@@ -107,7 +122,8 @@ def simulate(intra, extra, L):
             extra[-1] = 40
         #2
         trans_V = flat(intra)-flat(extra)
-        A_matrix = find_A(V_now, trans_V)
+        long_trans_V = flat_join(trans_V, trans_V)
+        A_matrix = find_A(trans_V)
 
         C_m = 1
         delta_t = 1
@@ -120,6 +136,8 @@ def simulate(intra, extra, L):
         soln_term = left_term - right_term
 
         #3 
+        #I'm pretty sure the V_new_coeff is  giving me a singular matrix error 
+        matprint(V_new_coeff)
         V_new = np.linalg.solve(V_new_coeff, soln_term)
 
         #overwrite the intra and extra to new intra and extra 

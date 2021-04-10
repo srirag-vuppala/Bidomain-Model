@@ -32,6 +32,8 @@ def matprint(mat, fmt="g"):
 
         
 def flat(V):
+    if(V.ndim == 1):
+        return V
     flat = []
     for row in V:
         for ele in row:

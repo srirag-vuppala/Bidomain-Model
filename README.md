@@ -74,7 +74,7 @@ Program Flow
 		3. Prep work:
 			1. Generate an 1-D array of transmembrane potential from <img src="https://render.githubusercontent.com/render/math?math=V_{Trans} = V_{intra} - V_{extra}"> 
 			2.  Find the <img src="https://render.githubusercontent.com/render/math?math=A"> coefficient from <img src="https://render.githubusercontent.com/render/math?math=V_T = A[V_i V_e]"> using `find_A()`
-				1.  **NOTE** I have no clue how to actually find this...look in code for why.
+				<!-- 1.  **NOTE** I have no clue how to actually find this...look in code for why. -->
 			4. Set the <img src="https://render.githubusercontent.com/render/math?math=C_m , \Delta{t}"> [could be done earlier]
 			5. Now find the **coefficient** for the <img src="https://render.githubusercontent.com/render/math?math=V^{n plus 1}"> time step [To be rendered] using `find_coeff_V()`
 			6. Solve the first term (i.e the term containing <img src="https://render.githubusercontent.com/render/math?math=V^{n}">) using `find_coeff_V()` and <img src="https://render.githubusercontent.com/render/math?math=V^{n}">
