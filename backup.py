@@ -24,3 +24,22 @@
         
 #         # trans_V = np.add(intra - extra, 70.0) 
 #         stepper += 1
+
+
+# def get_internal_matrix(V):
+#     temp = V
+#     temp = temp[1:len(temp)-1]
+#     for i, ele in enumerate(temp):
+#         temp[i] = temp[i][1:len(temp[i])-1]
+#     return temp
+
+# def flat_both(intra, extra):
+#     # Make it flat with v = [vi ..... ve] this is the V vector that gets multiplied with L[rows*2, cols*2]
+#     flat = []
+#     for row in intra:
+#         for ele in row:
+#             flat.append(ele)
+#     for row in extra:
+#         for ele in row:
+#             flat.append(ele)
+#     return flat

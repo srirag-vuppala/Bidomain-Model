@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation 
 import pandas as pd
 from utilities import *
+import os
 import hh
 
 # Prints the arrays properly with elements as X.YYY
@@ -15,8 +16,8 @@ np.set_printoptions(precision=3)
 
 def create_sheets():
     # the sheet will comprise of arrays of columns.
-    n_rows = 3 
-    n_columns =3 
+    n_rows = 5 
+    n_columns = 5
     intra = np.zeros([n_columns, n_rows ])
     intra += -70
     extra = np.zeros([n_columns, n_rows ])
@@ -65,14 +66,14 @@ def create_laplace_matrix(V, c):
     L += np.diagflat(temp, -1*buffer_number)
     return L
 
-def generate_ionic_current(V, A):
+def generate_ionic_current(V, A, delta_t):
     V_send = np.matmul(A, V)
     print(V_send)
     V_send = np.add(V_send, 70)
     # print(V_send)
     I_ion = hh.HodgkinHuxley().main(flat(V_send))
-
-    return np.asarray(I_ion) 
+    # delta_t rearrangement
+    return delta_t*np.asarray(I_ion) 
 
 def find_A(trans_V):
     # The pattern is the length of the trans_V is going to be the identity matrix which is going to be like [I -I | I -I]
@@ -91,16 +92,18 @@ def find_A(trans_V):
     # To remove the negative zero i.e a weird kink with numpy
     final = np.where(final==-0, 0, final)
     
-    matprint(final)
+    # matprint(final)
     
 
     return final 
 
 def find_coeff_V(type, A, C_m, delta_t, L):
-    term1 = C_m/delta_t
+    # term1 = C_m/delta_t
+    term1 = C_m
     term1 = term1*A 
     
-    term2 = 0.5*L
+    term2 = delta_t/2
+    term2 = term2*L
 
     if type == 'new':
         return term1 - term2
@@ -109,12 +112,29 @@ def find_coeff_V(type, A, C_m, delta_t, L):
 
 def simulate(intra, extra, L):
     orig_intra, orig_extra = intra, extra
-    V_now = flat_join(intra, extra)
+    # constants 
     stepper = 0
-    while stepper < 1:
+    C_m = 1
+    delta_t = 0.01
+    trans_V = flat(intra)-flat(extra)
+    A_matrix = find_A(trans_V)
+    V_new_coeff = find_coeff_V("new", A_matrix, C_m, delta_t, L)
+    V_now_coeff = find_coeff_V("now", A_matrix, C_m, delta_t, L)
+
+    print("Laplacian")
+    matprint(L)
+    print("V_new_coeff")
+    matprint(V_new_coeff)
+    print("Determinant")
+    print(np.linalg.det(V_new_coeff))
+
+    # Counter for storing plots
+    c = 0
+    V_now = flat_join(intra, extra)
+    while stepper < 10:
         #1
         #display stuff existing right now 
-        # display_heat_map(intra - extra)
+        display_heat_map(intra - extra, c)
 
         #2
         if stepper < 5:
@@ -123,29 +143,27 @@ def simulate(intra, extra, L):
         #2
         trans_V = flat(intra)-flat(extra)
         long_trans_V = flat_join(trans_V, trans_V)
-        A_matrix = find_A(trans_V)
 
-        C_m = 1
-        delta_t = 1
-        V_new_coeff = find_coeff_V("new", A_matrix, C_m, delta_t, L)
-        V_now_coeff = find_coeff_V("now", A_matrix, C_m, delta_t, L)
 
         # I can't think of a better name aahhhhhh
         left_term = np.matmul(V_now_coeff, V_now)
-        right_term = generate_ionic_current(V_now, A_matrix)
+        right_term = generate_ionic_current(V_now, A_matrix, delta_t)
         soln_term = left_term - right_term
 
         #3 
-        #I'm pretty sure the V_new_coeff is  giving me a singular matrix error 
-        matprint(V_new_coeff)
+        # solve doesn't work unfortunatly
+        # V_new = np.linalg.lstsq(V_new_coeff, soln_term, rcond=1)
         V_new = np.linalg.solve(V_new_coeff, soln_term)
+        print(V_new)
 
         #overwrite the intra and extra to new intra and extra 
         intra, extra = unflat_join(V_new, len(orig_intra), len(orig_extra[0]))
+        print(intra)
 
         
         V_now = V_new
         stepper += 1
+        c += 1
 
 def main():
     # Create the sheets first
@@ -165,17 +183,20 @@ def main():
     # create our laplacian matrix
     Li = create_laplace_matrix(intra, const_intra)
     Le = create_laplace_matrix(extra, const_extra)
-    print("The laplacian matrix")
+    # print("The laplacian matrix")
     # matprint(Li)
-    check_laplace_matrix(Li)
+    # check_laplace_matrix(Li)
 
     # Merge the Laplacian matrices 
     L = create_block_diag_matrix(Li, Le)
-    matprint(L)
-    check_laplace_matrix(L)
+    # matprint(L)
+    # check_laplace_matrix(L)
 
     simulate(intra, extra, L)
+
+os.system("ffmpeg -y -i 'foo%03d.jpg' bidomain.m4v")
 
 
 if __name__ == '__main__':
     main()
+    os.system("rm -f *.jpg")

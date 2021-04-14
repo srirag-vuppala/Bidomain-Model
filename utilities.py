@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 # TODO figure out to way to set precision with matprint
 np.set_printoptions(precision=3)
 
+
+
 def matprint(mat, fmt="g"):
     """
     USE: This function prints out the matrix in a nice and clean way.
@@ -29,7 +31,6 @@ def matprint(mat, fmt="g"):
         print("")
     
     print('-'*len(msg2))
-
         
 def flat(V):
     if(V.ndim == 1):
@@ -69,34 +70,16 @@ def check_laplace_matrix(L):
     else:
         print("Try again")
 
-    
-
-# def get_internal_matrix(V):
-#     temp = V
-#     temp = temp[1:len(temp)-1]
-#     for i, ele in enumerate(temp):
-#         temp[i] = temp[i][1:len(temp[i])-1]
-#     return temp
-
-# def flat_both(intra, extra):
-#     # Make it flat with v = [vi ..... ve] this is the V vector that gets multiplied with L[rows*2, cols*2]
-#     flat = []
-#     for row in intra:
-#         for ele in row:
-#             flat.append(ele)
-#     for row in extra:
-#         for ele in row:
-#             flat.append(ele)
-#     return flat
-
-def display_heat_map(V):
+def display_heat_map(V, c):
     df = pd.DataFrame(V, columns=[str(i)+'cols' for i in range(len(V))], index=[str(i)+'rows' for i in range(len(V[0]))]) 
     sns.set_theme()
     sns.color_palette("rocket", as_cmap=True)
     ax = sns.heatmap(df,  linewidths=1, square=True, annot=True)
     ax.invert_yaxis()
     # ax = sns.heatmap(V,  linewidths=1, square=True, cmap='Blues', annot=True)
-    plt.show()
+    plt.savefig('foo'+str(c+1).zfill(3)+'.jpg')
+    plt.clf()
+    # plt.show()
 
 def split_list(a_list):
     half = len(a_list)//2
