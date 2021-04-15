@@ -17,7 +17,7 @@ np.set_printoptions(precision=3)
 def create_sheets():
     # the sheet will comprise of arrays of columns.
     n_rows = 5 
-    n_columns = 5
+    n_columns = 3
     intra = np.zeros([n_columns, n_rows ])
     intra += -70
     extra = np.zeros([n_columns, n_rows ])
@@ -68,9 +68,7 @@ def create_laplace_matrix(V, c):
 
 def generate_ionic_current(V, A, delta_t):
     V_send = np.matmul(A, V)
-    print(V_send)
     V_send = np.add(V_send, 70)
-    # print(V_send)
     I_ion = hh.HodgkinHuxley().main(flat(V_send))
     # delta_t rearrangement
     return delta_t*np.asarray(I_ion) 
@@ -154,10 +152,12 @@ def simulate(intra, extra, L):
         # solve doesn't work unfortunatly
         # V_new = np.linalg.lstsq(V_new_coeff, soln_term, rcond=1)
         V_new = np.linalg.solve(V_new_coeff, soln_term)
+        print("V_new")
         print(V_new)
 
         #overwrite the intra and extra to new intra and extra 
         intra, extra = unflat_join(V_new, len(orig_intra), len(orig_extra[0]))
+        print("intra")
         print(intra)
 
         
@@ -195,6 +195,8 @@ def main():
     simulate(intra, extra, L)
 
 os.system("ffmpeg -y -i 'foo%03d.jpg' bidomain.m4v")
+os.system("ffmpeg -i bidomain.m4v -map 0:v -c:v copy -bsf:v h264_mp4toannexb raw.h264")
+
 
 
 if __name__ == '__main__':

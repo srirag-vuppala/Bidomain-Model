@@ -71,7 +71,7 @@ def check_laplace_matrix(L):
         print("Try again")
 
 def display_heat_map(V, c):
-    df = pd.DataFrame(V, columns=[str(i)+'cols' for i in range(len(V))], index=[str(i)+'rows' for i in range(len(V[0]))]) 
+    df = pd.DataFrame(V, columns=[str(i)+'cols' for i in range(len(V[0]))], index=[str(i)+'rows' for i in range(len(V))]) 
     sns.set_theme()
     sns.color_palette("rocket", as_cmap=True)
     ax = sns.heatmap(df,  linewidths=1, square=True, annot=True)
