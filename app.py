@@ -150,6 +150,7 @@ def simulate(intra, extra, L):
         left_term = np.matmul(V_now_coeff, V_now)
         right_term = generate_ionic_current(V_now, A_matrix, delta_t)
         soln_term = left_term - right_term
+        # putting in the soln for the artificial eqn
         soln_term[-1] = T
 
         #3 
