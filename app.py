@@ -16,8 +16,8 @@ np.set_printoptions(precision=3)
 
 def create_sheets():
     # the sheet will comprise of arrays of columns.
-    n_rows = 5 
-    n_columns = 3
+    n_rows = 6 
+    n_columns = 6
     intra = np.zeros([n_columns, n_rows ])
     intra += -70
     extra = np.zeros([n_columns, n_rows ])
@@ -91,8 +91,6 @@ def find_A(trans_V):
     final = np.where(final==-0, 0, final)
     
     # matprint(final)
-    
-
     return final 
 
 def find_coeff_V(type, A, C_m, delta_t, L):
@@ -116,20 +114,27 @@ def simulate(intra, extra, L):
     delta_t = 0.01
     trans_V = flat(intra)-flat(extra)
     A_matrix = find_A(trans_V)
-    V_new_coeff = find_coeff_V("new", A_matrix, C_m, delta_t, L)
     V_now_coeff = find_coeff_V("now", A_matrix, C_m, delta_t, L)
+    V_new_coeff = find_coeff_V("new", A_matrix, C_m, delta_t, L)
+    # Adding modification for constant potentials 
+    # Make last row all 1s to make the equation of the sum of all variables.
+    V_new_coeff[-1] = 1
+    #look a few lines below for the constant it gets equated to
 
-    print("Laplacian")
-    matprint(L)
-    print("V_new_coeff")
+    # print("Laplacian")
+    # matprint(L)
     matprint(V_new_coeff)
-    print("Determinant")
+    print("Determinant of V_new_coeff")
     print(np.linalg.det(V_new_coeff))
 
     # Counter for storing plots
     c = 0
     V_now = flat_join(intra, extra)
-    while stepper < 10:
+
+    # Finding the T variable that should be equated to our modification for constant potentials 
+    T = V_now.sum()
+    # T = 10 
+    while stepper < 100:
         #1
         #display stuff existing right now 
         display_heat_map(intra - extra, c)
@@ -140,18 +145,18 @@ def simulate(intra, extra, L):
             extra[-1] = 40
         #2
         trans_V = flat(intra)-flat(extra)
-        long_trans_V = flat_join(trans_V, trans_V)
-
 
         # I can't think of a better name aahhhhhh
         left_term = np.matmul(V_now_coeff, V_now)
         right_term = generate_ionic_current(V_now, A_matrix, delta_t)
         soln_term = left_term - right_term
+        soln_term[-1] = T
 
         #3 
         # solve doesn't work unfortunatly
         # V_new = np.linalg.lstsq(V_new_coeff, soln_term, rcond=1)
         V_new = np.linalg.solve(V_new_coeff, soln_term)
+        
         print("V_new")
         print(V_new)
 
@@ -159,7 +164,9 @@ def simulate(intra, extra, L):
         intra, extra = unflat_join(V_new, len(orig_intra), len(orig_extra[0]))
         print("intra")
         print(intra)
-
+        print("extra")
+        print(extra)
+        # T = V_now.sum()
         
         V_now = V_new
         stepper += 1
@@ -195,10 +202,11 @@ def main():
     simulate(intra, extra, L)
 
 os.system("ffmpeg -y -i 'foo%03d.jpg' bidomain.m4v")
-os.system("ffmpeg -i bidomain.m4v -map 0:v -c:v copy -bsf:v h264_mp4toannexb raw.h264")
+# os.system("ffmpeg -i bidomain.m4v -map 0:v -c:v copy -bsf:v h264_mp4toannexb raw.h264")
+# os.system("ffmpeg -i bidomain.mkv -filter:v \"setpts=2.0*PTS\" bidomain2.mkv")
 
 
 
 if __name__ == '__main__':
     main()
-    os.system("rm -f *.jpg")
+    # os.system("rm -f *.jpg")

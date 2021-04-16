@@ -107,6 +107,7 @@ def create_block_diag_matrix(Li, Le):
         final.append(np.concatenate((zero, ele), axis=0))
     return np.asarray(final)
 
+
 def main():
     arr = np.zeros([4,4])
     matprint(unflat(flat(arr), 4, 4))
