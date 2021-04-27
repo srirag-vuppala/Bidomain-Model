@@ -70,7 +70,7 @@ class HodgkinHuxley():
         I = []
         n=self.n_inf(V)
         m=self.m_inf(V)
-        h=self.h_inf(V)
+        # h=self.h_inf(V)
 
         GK = []
         GNa = []

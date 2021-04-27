@@ -2,10 +2,10 @@
 **IF THERE IS A FUNCTION YOU CAN'T FIND THE FUNCTION ITS PROBABLY PLACED IN THE UTILITIES**
 """
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation 
-import pandas as pd
+# import seaborn as sns
+# import matplotlib.pyplot as plt
+# import matplotlib.animation as animation 
+# import pandas as pd
 from utilities import *
 import os
 import hh
@@ -16,8 +16,8 @@ np.set_printoptions(precision=3)
 
 def create_sheets():
     # the sheet will comprise of arrays of columns.
-    n_rows = 6 
-    n_columns = 6
+    n_rows = 10
+    n_columns = 15
     intra = np.zeros([n_columns, n_rows ])
     intra += -70
     extra = np.zeros([n_columns, n_rows ])
@@ -36,10 +36,10 @@ def create_laplace_matrix(V, c):
     for i in range(len(V)):
         for j in range(len(V[i])):
             # Three point stencil
-            if (i==0 and j==0) or (i==len(V)-1 and j==0) or (i==0 and j==len(V)-1) or (i==len(V)-1 and j==len(V)-1):
+            if (i==0 and j==0) or (i==(len(V)-1) and j==0) or (i==0 and j==(len(V[i])-1)) or (i==len(V)-1 and j==len(V[i])-1):
                 temp.append(c*-2)
             # Four point stencil
-            elif (0<i<len(V[i])-1 and j==0) or (0<i<len(V[i]) and j== len(V)-1) or (i==0 and 0<j<len(V)) or (i==len(V)-1 and 0<j<len(V)):
+            elif (0<i<len(V)-1 and j==0) or (0<i<len(V) and j== len(V[i])-1) or (i==0 and 0<j<len(V[i])) or (i==len(V)-1 and 0<j<len(V[i])):
                 temp.append(c*-3)
             # Five point stencil
             else:
@@ -70,8 +70,7 @@ def generate_ionic_current(V, A, delta_t):
     V_send = np.matmul(A, V)
     V_send = np.add(V_send, 70)
     I_ion = hh.HodgkinHuxley().main(flat(V_send))
-    # delta_t rearrangement
-    return delta_t*np.asarray(I_ion) 
+    return 1000*delta_t*np.asarray(I_ion) 
 
 def find_A(trans_V):
     # The pattern is the length of the trans_V is going to be the identity matrix which is going to be like [I -I | I -I]
@@ -90,7 +89,6 @@ def find_A(trans_V):
     # To remove the negative zero i.e a weird kink with numpy
     final = np.where(final==-0, 0, final)
     
-    # matprint(final)
     return final 
 
 def find_coeff_V(type, A, C_m, delta_t, L):
@@ -111,36 +109,41 @@ def simulate(intra, extra, L):
     # constants 
     stepper = 0
     C_m = 1
-    delta_t = 0.01
+    delta_t = 1.47*10**(-7) 
     trans_V = flat(intra)-flat(extra)
     A_matrix = find_A(trans_V)
+
     V_now_coeff = find_coeff_V("now", A_matrix, C_m, delta_t, L)
     V_new_coeff = find_coeff_V("new", A_matrix, C_m, delta_t, L)
+
+
     # Adding modification for constant potentials 
     # Make last row all 1s to make the equation of the sum of all variables.
     V_new_coeff[-1] = 1
     #look a few lines below for the constant it gets equated to
-
-    # print("Laplacian")
-    # matprint(L)
-    matprint(V_new_coeff)
+    # matprint(V_new_coeff)
     print("Determinant of V_new_coeff")
     print(np.linalg.det(V_new_coeff))
 
+    extra[0] = -40
+    extra[-1] = 40
     # Counter for storing plots
     c = 0
     V_now = flat_join(intra, extra)
+    display_heat_map(intra - extra, c)
 
-    # Finding the T variable that should be equated to our modification for constant potentials 
-    T = V_now.sum()
-    # T = 10 
-    while stepper < 100:
+
+    # Finding the Tot variable that should be equated to our modification for constant potentials 
+    # Tot = V_now.sum()
+    while stepper < 60000:
         #1
         #display stuff existing right now 
-        display_heat_map(intra - extra, c)
+        if stepper%600 == 0:
+            display_heat_map((intra - extra).T, c)
+            c += 1
 
         #2
-        if stepper < 5:
+        if stepper < 4:
             extra[0] = -40
             extra[-1] = 40
         #2
@@ -150,12 +153,13 @@ def simulate(intra, extra, L):
         left_term = np.matmul(V_now_coeff, V_now)
         right_term = generate_ionic_current(V_now, A_matrix, delta_t)
         soln_term = left_term - right_term
+        # if stepper==0:
+            # this may not be required
+            # Tot = Tot = right_term[-1]
         # putting in the soln for the artificial eqn
-        soln_term[-1] = T
+        # soln_term[-1] = Tot
 
         #3 
-        # solve doesn't work unfortunatly
-        # V_new = np.linalg.lstsq(V_new_coeff, soln_term, rcond=1)
         V_new = np.linalg.solve(V_new_coeff, soln_term)
         
         print("V_new")
@@ -163,7 +167,7 @@ def simulate(intra, extra, L):
 
         #overwrite the intra and extra to new intra and extra 
         intra, extra = unflat_join(V_new, len(orig_intra), len(orig_extra[0]))
-        print("intra")
+        print("intra")  
         print(intra)
         print("extra")
         print(extra)
@@ -171,7 +175,6 @@ def simulate(intra, extra, L):
         
         V_now = V_new
         stepper += 1
-        c += 1
 
 def main():
     # Create the sheets first
@@ -181,7 +184,7 @@ def main():
     # Make the constant that multiplies all through the laplacian matrix | sigma/(delta x)^2
     # Divide this constant with chi (membrane surface-to-volume ratio)   
     # TODO: Find this constant (Ask prof for values)
-    delta_x = 0.01
+    delta_x = 0.014
     chi = 1
     sigma_i = 1
     sigma_e = 1
@@ -191,23 +194,23 @@ def main():
     # create our laplacian matrix
     Li = create_laplace_matrix(intra, const_intra)
     Le = create_laplace_matrix(extra, const_extra)
-    # print("The laplacian matrix")
-    # matprint(Li)
-    # check_laplace_matrix(Li)
 
     # Merge the Laplacian matrices 
+    print("The intra laplacian :")
+    matprint(Li)
     L = create_block_diag_matrix(Li, Le)
-    # matprint(L)
-    # check_laplace_matrix(L)
+    print("The laplacian :")
+    matprint(L)
+    print("the diag of laplacian: ")
+    print(np.diag(L))
+    print(len(np.diag(L)))
 
     simulate(intra, extra, L)
 
-os.system("ffmpeg -y -i 'foo%03d.jpg' bidomain.m4v")
-# os.system("ffmpeg -i bidomain.m4v -map 0:v -c:v copy -bsf:v h264_mp4toannexb raw.h264")
-# os.system("ffmpeg -i bidomain.mkv -filter:v \"setpts=2.0*PTS\" bidomain2.mkv")
 
-
+    os.system("ffmpeg -y -i 'foo%03d.jpg' bidomain.mp4")
 
 if __name__ == '__main__':
+    # os.system("rm bidomain.m4v")
     main()
     # os.system("rm -f *.jpg")

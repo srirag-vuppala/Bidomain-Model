@@ -71,10 +71,13 @@ def check_laplace_matrix(L):
         print("Try again")
 
 def display_heat_map(V, c):
+    fig, ax = plt.subplots(figsize=(20,10))
     df = pd.DataFrame(V, columns=[str(i)+'cols' for i in range(len(V[0]))], index=[str(i)+'rows' for i in range(len(V))]) 
     sns.set_theme()
     sns.color_palette("rocket", as_cmap=True)
-    ax = sns.heatmap(df,  linewidths=1, square=True, annot=True)
+    # max_degree = 90 
+    ax = sns.heatmap(df, linewidths=1, annot=True, vmin=-1*90, vmax=10, ax=ax)
+    # ax = sns.heatmap(df, linewidths=1, square=True, annot=True)
     ax.invert_yaxis()
     # ax = sns.heatmap(V,  linewidths=1, square=True, cmap='Blues', annot=True)
     plt.savefig('foo'+str(c+1).zfill(3)+'.jpg')
