@@ -4,7 +4,7 @@ A bidomain model of the heart where we simulate the progression of an action pot
 
 Description
 ---
-TBA
+To read more about the bidomain model and our implementation, click here - https://www.srirag.dev/article/bidomain-model
 
 ## Getting Started
 
