@@ -43,3 +43,11 @@
 #         for ele in row:
 #             flat.append(ele)
 #     return flat
+
+    # The diagonals right beside the main diagonal
+    # temp = []
+    # for i in range(size - 1):
+    #     if (i+1)%buffer_number == 0:
+    #         temp.append(0)
+    #     else:
+    #         temp.append(c*1

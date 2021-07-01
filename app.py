@@ -1,11 +1,8 @@
 """
 **IF THERE IS A FUNCTION YOU CAN'T FIND THE FUNCTION ITS PROBABLY PLACED IN THE UTILITIES**
 """
+# Imports 
 import numpy as np
-# import seaborn as sns
-# import matplotlib.pyplot as plt
-# import matplotlib.animation as animation 
-# import pandas as pd
 from utilities import *
 import os
 import hh
@@ -15,20 +12,23 @@ np.set_printoptions(precision=3)
 
 
 def create_sheets():
-    # the sheet will comprise of arrays of columns.
+    # A key observation from the cable equation implementation is that we have two sheets to represent the intracellular and extracellular space
+    # The sheet will comprise of arrays of columns. Thus to get the actual sheet just call transpose on the sheet.
     n_rows = 10
     n_columns = 15
+    # The intracellular space is initally at a potential of -70 mV
     intra = np.zeros([n_columns, n_rows ])
     intra += -70
+    # The extracellular space is initally at a potential of 0 mV
     extra = np.zeros([n_columns, n_rows ])
     return intra, extra
      
 def create_laplace_matrix(V, c):
-    # takes in either intra or extra flattens it then and makes the respective L
+    # Takes in either intra or extra flattens it then and makes the respective Laplacian
     flattened= flat(V)
     L = []
     size = len(flattened)
-    # this is the number that changes according to the size of matrix (the m value of matrix)
+    # this is the number that changes according to the size of matrix (the m value of matrix) 
     buffer_number = len(V[0])
     temp = []
 
@@ -47,21 +47,12 @@ def create_laplace_matrix(V, c):
     L = np.diagflat(temp)
 
     # The diagonals right beside the main diagonal
-    temp = []
-    for i in range(size - 1):
-        # Here the number is 3 for 3x3 i think 4 for 4x4 
-        # I think the trend continues but I haven't verified it.
-        if (i+1)%buffer_number == 0:
-            temp.append(0)
-        else:
-            temp.append(c*1)
-    # TODO (Low priority) figure out why this list comprehension isn't working
-    # temp = [c*-1 if (i+1)%3 == 0 else 0 for i in range(size - 1)]
+    temp = [0 if (i+1)%buffer_number == 0 else c*1 for i in range(size - 1)]
     L += np.diagflat(temp, 1)
     L += np.diagflat(temp, -1)
 
     #The diagonals that are spaced our depending on the size of the matrix
-    temp = [c*1 for i in range(size-buffer_number)]
+    temp = [c*1 for _ in range(size-buffer_number)]
     L += np.diagflat(temp, buffer_number)
     L += np.diagflat(temp, -1*buffer_number)
     return L
@@ -92,7 +83,6 @@ def find_A(trans_V):
     return final 
 
 def find_coeff_V(type, A, C_m, delta_t, L):
-    # term1 = C_m/delta_t
     term1 = C_m
     term1 = term1*A 
     
@@ -111,67 +101,48 @@ def simulate(intra, extra, L):
     C_m = 1
     delta_t = 1.47*10**(-7) 
     trans_V = flat(intra)-flat(extra)
+
     A_matrix = find_A(trans_V)
 
     V_now_coeff = find_coeff_V("now", A_matrix, C_m, delta_t, L)
     V_new_coeff = find_coeff_V("new", A_matrix, C_m, delta_t, L)
 
-
     # Adding modification for constant potentials 
     # Make last row all 1s to make the equation of the sum of all variables.
     V_new_coeff[-1] = 1
-    #look a few lines below for the constant it gets equated to
-    # matprint(V_new_coeff)
-    print("Determinant of V_new_coeff")
-    print(np.linalg.det(V_new_coeff))
 
     extra[0] = -40
     extra[-1] = 40
+
     # Counter for storing plots
     c = 0
     V_now = flat_join(intra, extra)
     display_heat_map(intra - extra, c)
 
-
-    # Finding the Tot variable that should be equated to our modification for constant potentials 
-    # Tot = V_now.sum()
     while stepper < 60000:
         #1
-        #display stuff existing right now 
+        #display stuff existing stuff every 600 time steps right now 
         if stepper%600 == 0:
             display_heat_map((intra - extra).T, c)
             c += 1
 
         #2
+        # Holding ends of the sheet at a high potential difference so as to induce an current to initiate action potential
         if stepper < 4:
             extra[0] = -40
             extra[-1] = 40
         #2
         trans_V = flat(intra)-flat(extra)
 
-        # I can't think of a better name aahhhhhh
         left_term = np.matmul(V_now_coeff, V_now)
         right_term = generate_ionic_current(V_now, A_matrix, delta_t)
         soln_term = left_term - right_term
-        # if stepper==0:
-            # this may not be required
-            # Tot = Tot = right_term[-1]
-        # putting in the soln for the artificial eqn
-        # soln_term[-1] = Tot
 
         #3 
         V_new = np.linalg.solve(V_new_coeff, soln_term)
-        
-        print("V_new")
-        print(V_new)
 
         #overwrite the intra and extra to new intra and extra 
         intra, extra = unflat_join(V_new, len(orig_intra), len(orig_extra[0]))
-        print("intra")  
-        print(intra)
-        print("extra")
-        print(extra)
-        # T = V_now.sum()
         
         V_now = V_new
         stepper += 1
@@ -179,38 +150,38 @@ def simulate(intra, extra, L):
 def main():
     # Create the sheets first
     intra, extra = create_sheets()
-    # matprint(intra)
 
+
+    # Similar to the D_v constant that existed in the cable equation
     # Make the constant that multiplies all through the laplacian matrix | sigma/(delta x)^2
-    # Divide this constant with chi (membrane surface-to-volume ratio)   
-    # TODO: Find this constant (Ask prof for values)
+    # delta_x is the seperating distance between two nodes
     delta_x = 0.014
+
+    # Divide this constant with chi (membrane surface-to-volume ratio)  | We do this just for ease 
     chi = 1
+    
+    # sigma_i and e are the conductivity tensors for the intracellular and extracellular spaces
     sigma_i = 1
     sigma_e = 1
+
+    # Since we have two laplacians for each space, we have sign changed constants that we multiply our Laplacians 
     const_intra = sigma_i/(delta_x*delta_x*chi)  
     const_extra = -1*sigma_e/(delta_x*delta_x*chi)
     
-    # create our laplacian matrix
+    # create our laplacian matrices
     Li = create_laplace_matrix(intra, const_intra)
     Le = create_laplace_matrix(extra, const_extra)
 
     # Merge the Laplacian matrices 
-    print("The intra laplacian :")
-    matprint(Li)
+    # We do this to to unify all of our variables to make it easy to keep track off of 
+    # This isn't required if you'd rather just continue to do things twice (once for intra and once for extra)
     L = create_block_diag_matrix(Li, Le)
-    print("The laplacian :")
-    matprint(L)
-    print("the diag of laplacian: ")
-    print(np.diag(L))
-    print(len(np.diag(L)))
 
     simulate(intra, extra, L)
 
 
     os.system("ffmpeg -y -i 'foo%03d.jpg' bidomain.mp4")
+    os.system("rm -f *.jpg")
 
 if __name__ == '__main__':
-    # os.system("rm bidomain.m4v")
     main()
-    # os.system("rm -f *.jpg")
