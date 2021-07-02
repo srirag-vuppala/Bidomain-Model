@@ -152,8 +152,6 @@ def main():
     intra, extra = create_sheets()
 
 
-    # Similar to the D_v constant that existed in the cable equation
-    # Make the constant that multiplies all through the laplacian matrix | sigma/(delta x)^2
     # delta_x is the seperating distance between two nodes
     delta_x = 0.014
 
@@ -164,9 +162,11 @@ def main():
     sigma_i = 1
     sigma_e = 1
 
+    # Similar to the D_v like constant that existed in the cable equation
+    # Make the constant that multiplies all through the laplacian matrix | sigma/(delta x)^2
     # Since we have two laplacians for each space, we have sign changed constants that we multiply our Laplacians 
     const_intra = sigma_i/(delta_x*delta_x*chi)  
-    const_extra = -1*sigma_e/(delta_x*delta_x*chi)
+    const_extra = -1*sigma_e/(delta_x*delta_x*chi) # chi is also sent here just to reduce variables 
     
     # create our laplacian matrices
     Li = create_laplace_matrix(intra, const_intra)
